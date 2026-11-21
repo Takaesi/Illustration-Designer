@@ -1,3 +1,4 @@
+import { setTimeout as delay } from 'node:timers/promises';
 import { objects } from './dist/catalog.js';
 
 const ids = objects.map(({id})=>id);
@@ -70,23 +71,49 @@ export function createSuggester(env=process.env, fetchModel=fetch) {
   let quotaDay;
   let requestsToday = 0;
   let pending = 0;
+  function reserveCloudRequest() {
+    const today = new Date().toISOString().slice(0,10);
+    if (quotaDay!==today) {
+      quotaDay = today;
+      requestsToday = 0;
+    }
+    const max = Number(env.SUGGEST_DAILY_LIMIT ?? 150);
+    if (!Number.isSafeInteger(max) || max<1) throw new SuggestError(503,'Подбор по заголовку отключён.');
+    if (requestsToday>=max) throw new SuggestError(429,'Дневной лимит подбора исчерпан.');
+    requestsToday++;
+  }
+
+  async function requestModel(url,headers,body) {
+    for (let attempt=1; ; attempt++) {
+      if (cloud) reserveCloudRequest();
+      let failure;
+      try {
+        const response = await fetchModel(url,{
+          method:'POST',headers,body:JSON.stringify(body),signal:AbortSignal.timeout(gemini ? 20_000 : 45_000),
+        });
+        if (!gemini || response.status!==503 || attempt===2) {
+          return {response,result:response.ok ? await response.json() : undefined};
+        }
+        if (response.body) void response.body.cancel().catch(()=>{});
+        failure = {status:503};
+      } catch(error) {
+        const code = error.cause?.code;
+        const timeout = error.name==='TimeoutError' ||
+          ['ETIMEDOUT','UND_ERR_CONNECT_TIMEOUT','UND_ERR_HEADERS_TIMEOUT','UND_ERR_BODY_TIMEOUT'].includes(code);
+        if (!gemini || attempt===2 || !timeout) throw error;
+        failure = {code:code || error.name};
+      }
+      console.warn(JSON.stringify({event:'model_retry',provider,model,...failure}));
+      await delay(800+Math.floor(Math.random()*401));
+    }
+  }
+
   return async input=>{
     const title = validateTitle(input);
     if ((!cloud && provider!=='ollama') || (cloud && !apiKey)) {
       throw new SuggestError(503,'Подбор по заголовку пока не настроен.');
     }
     if (pending>=2) throw new SuggestError(429,'Подбор уже выполняется. Попробуйте чуть позже.');
-    if (cloud) {
-      const today = new Date().toISOString().slice(0,10);
-      if (quotaDay!==today) {
-        quotaDay = today;
-        requestsToday = 0;
-      }
-      const max = Number(env.SUGGEST_DAILY_LIMIT ?? 150);
-      if (!Number.isSafeInteger(max) || max<1) throw new SuggestError(503,'Подбор по заголовку отключён.');
-      if (requestsToday>=max) throw new SuggestError(429,'Дневной лимит подбора исчерпан.');
-      requestsToday++;
-    }
 
     pending++;
     try {
@@ -111,9 +138,7 @@ export function createSuggester(env=process.env, fetchModel=fetch) {
           {role:'user',content:title},
         ],
       };
-      const response = await fetchModel(url,{
-        method:'POST',headers,body:JSON.stringify(body),signal:AbortSignal.timeout(45_000),
-      });
+      const {response,result} = await requestModel(url,headers,body);
       if (!response.ok) {
         const status = response.status;
         if (cloud) {
@@ -139,7 +164,6 @@ export function createSuggester(env=process.env, fetchModel=fetch) {
           ? 'Облачная модель недоступна (HTTP '+status+'). Можно выбрать предметы вручную.'
           : 'Модель временно недоступна. Можно выбрать предметы вручную.');
       }
-      const result = await response.json();
       return parseSuggestion(gemini ? result.candidates?.[0]?.content?.parts?.filter(part=>!part.thought).map(part=>part.text).join('') : result.message?.content);
     } catch(error) {
       if (error instanceof SuggestError) throw error;
