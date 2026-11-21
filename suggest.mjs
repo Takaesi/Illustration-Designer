@@ -86,7 +86,7 @@ export function createSuggester(env=process.env, fetchModel=fetch) {
       } : {
         model,stream:false,
         ...(ollamaCloud ? {think:'low'} : {format:schema}),
-        options:{temperature:0,num_ctx:2048,num_predict:ollamaCloud ? 512 : 192},
+        options:ollamaCloud ? {temperature:0,num_predict:512} : {temperature:0,num_ctx:2048,num_predict:192},
         messages:[
           {role:'system',content:ollamaCloud
             ? system+'\nОтветь только JSON вида {"items":[{"id":"book","role":"main"}]}. Для отсутствия предмета верни {"items":[]}.'
@@ -97,9 +97,21 @@ export function createSuggester(env=process.env, fetchModel=fetch) {
       const response = await fetchModel(url,{
         method:'POST',headers,body:JSON.stringify(body),signal:AbortSignal.timeout(45_000),
       });
-      if (!cloud && response.status===404) throw new SuggestError(503,'Ollama не нашла настроенную модель.');
-      if (cloud && response.status===429) throw new SuggestError(429,'Облачный провайдер ограничил запросы. Можно выбрать предметы вручную.');
-      if (!response.ok) throw new SuggestError(503,'Модель временно недоступна. Можно выбрать предметы вручную.');
+      if (!response.ok) {
+        const status = response.status;
+        if (cloud) {
+          console.warn(JSON.stringify({event:'model_http_error',provider,model,status}));
+          if (status===401 || status===403) {
+            throw new SuggestError(503,'Облачный провайдер отклонил доступ. Проверьте ключ и доступ к модели.');
+          }
+          if (status===402) throw new SuggestError(503,'Облачный провайдер требует пополнить баланс.');
+          if (status===429) throw new SuggestError(429,'Облачный провайдер ограничил запросы. Можно выбрать предметы вручную.');
+        }
+        if (status===404) throw new SuggestError(503,'Провайдер не нашёл настроенную модель.');
+        throw new SuggestError(503,cloud
+          ? 'Облачная модель недоступна (HTTP '+status+'). Можно выбрать предметы вручную.'
+          : 'Модель временно недоступна. Можно выбрать предметы вручную.');
+      }
       const result = await response.json();
       return parseSuggestion(gemini ? result.candidates?.[0]?.content?.parts?.filter(part=>!part.thought).map(part=>part.text).join('') : result.message?.content);
     } catch(error) {
@@ -107,9 +119,13 @@ export function createSuggester(env=process.env, fetchModel=fetch) {
       if (error instanceof SyntaxError || error.message==='Invalid suggestion') {
         throw new SuggestError(502,'Модель вернула некорректный подбор. Можно повторить запрос или выбрать предметы вручную.');
       }
+      if (cloud) {
+        const code = error.cause?.code || error.name;
+        console.warn(JSON.stringify({event:'model_connection_error',provider,model,code}));
+      }
       throw new SuggestError(503,provider==='ollama'
         ? 'Ollama недоступна или не успела ответить. Проверьте, что она запущена.'
-        : 'Модель временно недоступна. Можно выбрать предметы вручную.');
+        : 'Нет соединения с облачной моделью. Можно выбрать предметы вручную.');
     } finally {
       pending--;
     }
