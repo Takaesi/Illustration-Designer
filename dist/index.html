@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Конструктор иллюстраций</title>
+<link rel="stylesheet" href="./style.css">
+<script type="module" src="./app.js"></script>
+</head>
+<body>
+<header><h1>Конструктор иллюстраций</h1><button type="button" id="export" disabled>Скачать SVG</button></header>
+<main>
+<aside>
+<form id="suggest-form" hidden>
+<h2>По заголовку</h2>
+<label for="headline">Заголовок или метафора</label>
+<input id="headline" type="text" maxlength="240" required placeholder="Идея складывается по частям">
+<button id="suggest" type="submit">Подобрать предметы</button>
+<p id="suggest-status" role="status"></p>
+</form>
+<h2>Объекты</h2>
+<input id="query" type="search" placeholder="Книга, телефон, пазлы…" aria-label="Поиск объектов">
+<div id="catalog" class="catalog"></div>
+<button id="compose" type="button">Собрать варианты</button>
+<h2>Холст</h2>
+<label>Формат<select id="format"><option value="square">Квадрат · 1000 × 1000</option><option value="wide" selected>Горизонталь · 1200 × 630</option><option value="portrait">Вертикаль · 800 × 1200</option></select></label>
+<label>Детализация<select id="size"><option>L</option><option>S</option></select></label>
+<label>Палитра<select id="palette"><option value="original">Исходные цвета</option><option value="lavender">Лавандовая</option><option value="peach">Персиковая</option><option value="mint">Бирюзовая</option><option value="custom" hidden>Пользовательская</option></select></label>
+<label class="file">Загрузить палитру JSON<input id="colors" type="file" accept=".json"></label>
+</aside>
+<section class="workspace" aria-label="Рабочий холст">
+<div class="stage" id="stage"><p id="empty">Выберите предметы и соберите варианты.</p></div>
+<div id="variants" class="variants" aria-label="Варианты раскладки"></div>
+<p id="status" role="status"></p>
+</section>
+<aside class="editor">
+<h2>Слои</h2>
+<div id="layers"></div>
+<fieldset id="controls" disabled>
+<legend>Выбранный объект</legend>
+<label>Роль<select id="role"><option value="main">Главный</option><option value="bg">Фоновый</option></select></label>
+<div class="coordinates"><label>X<input id="x" type="number" step="1"></label><label>Y<input id="y" type="number" step="1"></label></div>
+<label>Поворот, °<input id="angle" type="number" step="1"></label>
+<div class="actions"><button data-action="front">Выше</button><button data-action="back">Ниже</button><button data-action="duplicate">Дублировать</button><button data-action="remove">Удалить</button></div>
+</fieldset>
+<details><summary>Исходники из Figma</summary><p id="assets-status"></p><label class="file">Добавить SVG или библиотеку JSON<input id="files" type="file" accept=".svg,.json" multiple></label><p class="hint">Имя файла должно совпадать с ID узла, например 23-121.svg.</p></details>
+</aside>
+</main>
+</body>
+</html>

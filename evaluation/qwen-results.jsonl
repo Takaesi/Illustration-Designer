@@ -1,0 +1,3 @@
+{"title":"Наведи порядок в документах","expected":["folder"],"items":[{"id":"folder","role":"main"}],"valid":true,"hit":true,"elapsedMs":140700}
+{"title":"Наушники для работы в шумном офисе","expected":["headphones"],"items":[],"valid":true,"hit":false,"elapsedMs":65067}
+{"title":"Как читать больше книг","expected":["book"],"items":[{"id":"book","role":"main"},{"id":"lamp","role":"bg"},{"id":"pen","role":"bg"}],"valid":true,"hit":true,"elapsedMs":268149}

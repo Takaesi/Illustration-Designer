@@ -1,0 +1,11 @@
+{
+  "name": "illustration-composer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node serve.mjs",
+    "start": "node serve.mjs",
+    "check": "node --check dist/app.js && node --check dist/svg.js && node --check dist/layout.js && node --check serve.mjs && node --check suggest.mjs && node --check build-offline.mjs",
+    "build:offline": "node build-offline.mjs"
+  }
+}

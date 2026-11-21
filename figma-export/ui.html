@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ru"><meta charset="utf-8">
+<style>body{font:14px system-ui;padding:14px}button{font:inherit;padding:8px 12px}p{white-space:pre-line}</style>
+<p id="status">Экспортирую исходники…</p>
+<button id="save" disabled>Скачать библиотеку JSON</button>
+<script>
+const status = document.getElementById('status');
+const save = document.getElementById('save');
+onmessage = event => {
+  const {library,errors} = event.data.pluginMessage;
+  const count = Object.keys(library?.assets ?? {}).length;
+  status.textContent = 'Экспортировано SVG: ' + count + ' из 46.' + (errors.length ? '\n' + errors.join('\n') : '');
+  if (!count) return;
+  save.disabled = false;
+  save.onclick = () => {
+    const url = URL.createObjectURL(new Blob([JSON.stringify(library)],{type:'application/json'}));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'illustration-library.json';
+    link.click();
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+  };
+};
+</script></html>

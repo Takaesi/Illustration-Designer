@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: illustration-composer
+    runtime: node
+    plan: free
+    buildCommand: npm run check
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: SUGGEST_PROVIDER
+        value: ollama-cloud
+      - key: OLLAMA_API_KEY
+        sync: false
+      - key: OLLAMA_MODEL
+        value: "gpt-oss:20b"
+      - key: SUGGEST_DAILY_LIMIT
+        value: "150"

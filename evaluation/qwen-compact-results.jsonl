@@ -1,0 +1,21 @@
+{"title":"Наведи порядок в документах","expected":["folder"],"items":[{"id":"folder","role":"main"}],"valid":true,"hit":true,"elapsedMs":27347}
+{"title":"Наушники для работы в шумном офисе","expected":["headphones"],"items":[{"id":"headphones","role":"main"}],"valid":true,"hit":true,"elapsedMs":6809}
+{"title":"Как читать больше книг","expected":["book"],"items":[{"id":"book","role":"main"}],"valid":true,"hit":true,"elapsedMs":6558}
+{"title":"Как платить телефоном","expected":["phone"],"items":[{"id":"phone","role":"main"}],"valid":true,"hit":true,"elapsedMs":6561}
+{"title":"Семейный бюджет без стресса","expected":["wallet","coin"],"items":[{"id":"wallet","role":"main"}],"valid":true,"hit":true,"elapsedMs":6935}
+{"title":"Время включить настольную лампу","expected":["lamp"],"items":[{"id":"lamp","role":"main"}],"valid":true,"hit":true,"elapsedMs":7630}
+{"title":"Букет, который украсит рабочий стол","expected":["flowers"],"items":[{"id":"flowers","role":"main"}],"valid":true,"hit":true,"elapsedMs":10416}
+{"title":"Что записать от руки в конце дня","expected":["pen"],"items":[{"id":"pen","role":"main"}],"valid":true,"hit":true,"elapsedMs":7117}
+{"title":"Идея складывается по частям","expected":["puzzle"],"items":[{"id":"puzzle","role":"main"}],"valid":true,"hit":true,"elapsedMs":9811}
+{"title":"Поймать мысль, пока она не погасла","expected":["lamp","pen"],"items":[{"id":"lamp","role":"main"}],"valid":true,"hit":true,"elapsedMs":12214}
+{"title":"Разложить хаос по полочкам","expected":["folder","puzzle"],"items":[{"id":"pen","role":"main"}],"valid":true,"hit":false,"elapsedMs":9840}
+{"title":"Копейка рубль бережёт","expected":["coin","wallet"],"items":[{"id":"coin","role":"main"}],"valid":true,"hit":true,"elapsedMs":9978}
+{"title":"В тишине слышно главное","expected":["headphones"],"items":[{"id":"lamp","role":"main"}],"valid":true,"hit":false,"elapsedMs":9590}
+{"title":"Связь на расстоянии","expected":["phone"],"items":[{"id":"phone","role":"main"}],"valid":true,"hit":true,"elapsedMs":9106}
+{"title":"Поставить точку в споре","expected":["pen"],"items":[{"id":"pen","role":"main"}],"valid":true,"hit":true,"elapsedMs":9847}
+{"title":"Знания, которые освещают путь","expected":["book","lamp"],"items":[{"id":"lamp","role":"main"}],"valid":true,"hit":true,"elapsedMs":10251}
+{"title":"Расцвести на новом месте","expected":["flowers"],"items":[{"id":"flowers","role":"main"}],"valid":true,"hit":true,"elapsedMs":9819}
+{"title":"Уход за аквариумными рыбками","expected":[],"items":[{"id":"pen","role":"main"}],"valid":true,"hit":false,"elapsedMs":9874}
+{"title":"Прогноз погоды для горнолыжников","expected":[],"items":[{"id":"phone","role":"main"}],"valid":true,"hit":false,"elapsedMs":11454}
+{"title":"Рецепт супа из тыквы","expected":[],"items":[{"id":"pen","role":"main"}],"valid":true,"hit":false,"elapsedMs":10117}
+{"model":"qwen3:4b-instruct","runtime":"llama.cpp","format":"single-choice","valid":20,"hit":15,"total":20}
