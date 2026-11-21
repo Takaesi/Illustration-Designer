@@ -41,6 +41,23 @@ function parseSuggestion(answer) {
   return {items:items.map(({id,role})=>({id,role}))};
 }
 
+async function diagnoseGemini(response) {
+  const {error} = await response.json().catch(()=>({}));
+  const statuses = ['INVALID_ARGUMENT','FAILED_PRECONDITION','UNAUTHENTICATED','PERMISSION_DENIED','NOT_FOUND','RESOURCE_EXHAUSTED'];
+  const reasons = ['API_KEY_INVALID','API_KEY_SERVICE_BLOCKED','API_KEY_IP_ADDRESS_BLOCKED',
+    'SERVICE_DISABLED','BILLING_DISABLED','CONSUMER_INVALID'];
+  const apiStatus = statuses.includes(error?.status) ? error.status : undefined;
+  const detail = Array.isArray(error?.details) ? error.details.find(item=>reasons.includes(item?.reason))?.reason : undefined;
+  const description = typeof error?.message==='string' ? error.message : '';
+  const category = /location|region|country/i.test(description) && /not supported|not available|unsupported/i.test(description)
+    ? 'unsupported_location'
+    : /api key (?:not valid|is invalid)/i.test(description) ? 'invalid_key'
+      : /response.?json.?schema|response.?schema/i.test(description) ? 'response_schema'
+        : /billing|free tier|verification/i.test(description) ? 'project_access'
+          : undefined;
+  return {apiStatus,detail,category};
+}
+
 export function createSuggester(env=process.env, fetchModel=fetch) {
   const provider = env.SUGGEST_PROVIDER || 'ollama';
   const ollamaCloud = provider==='ollama-cloud';
@@ -100,7 +117,17 @@ export function createSuggester(env=process.env, fetchModel=fetch) {
       if (!response.ok) {
         const status = response.status;
         if (cloud) {
-          console.warn(JSON.stringify({event:'model_http_error',provider,model,status}));
+          const diagnosis = gemini ? await diagnoseGemini(response) : {};
+          console.warn(JSON.stringify({event:'model_http_error',provider,model,status,...diagnosis}));
+          if (diagnosis.category==='unsupported_location') {
+            throw new SuggestError(503,'Gemini API недоступен для региона запроса.');
+          }
+          if (diagnosis.detail==='API_KEY_INVALID' || diagnosis.category==='invalid_key') {
+            throw new SuggestError(503,'Gemini отклонил API-ключ. Проверьте значение GEMINI_API_KEY в Render.');
+          }
+          if (diagnosis.category==='project_access' || ['BILLING_DISABLED','SERVICE_DISABLED'].includes(diagnosis.detail)) {
+            throw new SuggestError(503,'Проект Google не допускает запросы к Gemini API. Проверьте бесплатный доступ в Google AI Studio.');
+          }
           if (status===401 || status===403) {
             throw new SuggestError(503,'Облачный провайдер отклонил доступ. Проверьте ключ и доступ к модели.');
           }
